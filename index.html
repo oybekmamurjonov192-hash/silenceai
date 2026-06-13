@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Silence AI — SOC dashboard & Proaktiv Himoya Tizimi</title>
+  
+  <!-- Modern Typography -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap">
+  
+  <!-- FontAwesome for Premium Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js CDN for real-time traffic chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Real-time Attack Alert Banner -->
+  <div id="alert-banner" class="alert-banner">
+    <span><i class="fa-solid fa-triangle-exclamation fa-fade"></i> <strong>DIQQAT:</strong> Tizimga faol DDoS hujumi aniqlandi! Manba IP: <span id="attacker-ip">185.220.101.5</span></span>
+    <button id="alert-solve-btn" class="alert-banner-btn">Avtomatik Himoyani Yoqish</button>
+  </div>
+
+  <div class="app-layout">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="logo-text">
+          <h2>Silence AI</h2>
+          <span>Proactive Defense</span>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">SOC Tizimi</div>
+        <a href="#dashboard" class="nav-item active" id="nav-dashboard">
+          <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+        <a href="#threats" class="nav-item" id="nav-threats">
+          <i class="fa-solid fa-triangle-exclamation"></i> Threats <span class="nav-badge" id="threats-badge">0</span>
+        </a>
+        <a href="#logs" class="nav-item" id="nav-logs">
+          <i class="fa-solid fa-terminal"></i> Activity Logs
+        </a>
+        <a href="#devices" class="nav-item" id="nav-devices">
+          <i class="fa-solid fa-server"></i> Devices & Agents
+        </a>
+        
+        <div class="nav-section-title">Ma'muriyat</div>
+        <a href="#settings" class="nav-item" id="nav-settings">
+          <i class="fa-solid fa-sliders"></i> Settings
+        </a>
+        <a href="#" class="nav-item" id="nav-telegram" onclick="openTelegramModal()">
+          <i class="fa-brands fa-telegram"></i> Telegram Bot
+          <span id="tg-status-badge" style="font-size:9px;background:rgba(239,68,68,0.3);color:#fca5a5;padding:2px 6px;border-radius:10px;margin-left:auto;">OFF</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-users" onclick="openUsersModal()">
+          <i class="fa-solid fa-users"></i> Foydalanuvchilar
+        </a>
+        <a href="#" class="nav-item" id="nav-apikeys" onclick="openApiKeysModal()">
+          <i class="fa-solid fa-key"></i> API Kalitlar
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="agent-status-card">
+          <div class="status-indicator">
+            <span class="status-dot green" id="backend-status-dot"></span>
+            <span id="backend-status-text">Server: Ulandi</span>
+          </div>
+          <p class="agent-count-txt" id="active-agents-count">Tugunlar: 7 ta faol</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+      
+      <!-- TOP STATUS BAR -->
+      <header class="top-bar">
+        <div class="breadcrumb">
+          <span class="root-path">Silence AI</span>
+          <span class="separator">/</span>
+          <span class="current-path" id="breadcrumb-current">Dashboard</span>
+        </div>
+        
+        <div class="top-bar-actions">
+          <div class="server-status">
+            <div id="status-dot" class="status-dot"></div>
+            <span id="status-text" class="status-text">Tizim holati: Barqaror</span>
+          </div>
+          <div class="user-info-bar" id="user-info-bar" style="display:flex;align-items:center;gap:10px;margin-left:16px;">
+            <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">👤</span>
+              <span id="user-display-name" style="font-size:13px;font-weight:600;color:#a5b4fc;">Admin</span>
+              <span id="user-display-role" style="font-size:10px;background:rgba(99,102,241,0.3);color:#818cf8;padding:2px 8px;border-radius:12px;text-transform:uppercase;">admin</span>
+            </div>
+            <button id="btn-logout" onclick="doLogout()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;transition:all 0.3s;" title="Chiqish">🚪 Chiqish</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- SCREEN WORKSPACES -->
+      <div class="workspace-viewport">
+        
+        <!-- ================= DASHBOARD PAGE ================= -->
+        <div class="workspace-page active" id="page-dashboard">
+          
+          <!-- Notion-like block info alert -->
+          <div class="notion-info-banner">
+            <div class="info-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="info-text">
+              <strong>Notion-Style Block Workspace:</strong> Har bir modul blok ko'rinishida tuzilgan. Bloklarni drag handle <i class="fa-solid fa-grip-vertical"></i> orqali joylashish tartibini o'zgartirish va holatini o'chirish/yoqish mumkin. Blok konfiguratsiyasi saqlanadi.
+            </div>
+            <div class="info-action">
+              <button class="notion-reset-blocks-btn" id="btn-reset-blocks"><i class="fa-solid fa-rotate-left"></i> Joylashuvni Tiklash</button>
+            </div>
+          </div>
+
+          <!-- Draggable Block Grid -->
+          <div class="notion-block-grid" id="dashboard-blocks-container">
+            
+            <!-- KPI Blocks (Metrics) -->
+            <div class="notion-block card" draggable="true" id="block-kpis" data-block-id="kpis">
+              <div class="block-drag-handle">
+                <i class="fa-solid fa-grip-vertical"></i>
+                <span class="block-title">Asosiy ko'rsatkichlar</span>
+              </div>
+              <section class="kpi-container">
+                <div class="kpi-card anomaly">
+                  <div class="kpi-header">
+                    <span class="kpi-title">Anomaliya darajasi</span>
+                    <div class="kpi-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                  </div>
+                  <div class="kpi-value" id="kpi-anomaly">1.2%</div>
+                  <div class="kpi-trend" id="kpi-anomaly-trend">
+                    <i class="fa-solid fa-arrow-trend-down"></i> <span>Normal holat</span>
+                  </div>
+                </div>
+
+                <div class="kpi-card traffic">
+                  <div class="kpi-header">
+                    <span class="kpi-title">Trafik tezligi</span>
+                    <div class="kpi-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+                  </div>
+                  <div class="kpi-value" id="kpi-traffic">342 Mbps</div>
+                  <div class="kpi-trend" id="kpi-traffic-trend">
+                    <i class="fa-solid fa-arrow-trend-up"></i> <span>Barqaror</span>
+                  </div>
+                </div>
+
+                <div class="kpi-card">
+                  <div class="kpi-header">
+                    <span class="kpi-title">Himoyadagi qurilmalar</span>
+                    <div class="kpi-icon"><i class="fa-solid fa-server"></i></div>
+                  </div>
+                  <div class="kpi-value" id="kpi-nodes">7 / 7</div>
+                  <div class="kpi-trend" id="kpi-nodes-trend">
+                    <i class="fa-solid fa-circle-check"></i> <span>Barcha tugunlar faol</span>
+                  </div>
+                </div>
+
+                <div class="kpi-card threats">
+                  <div class="kpi-header">
+                    <span class="kpi-title">Bloklangan tahdidlar</span>
+                    <div class="kpi-icon"><i class="fa-solid fa-user-slash"></i></div>
+                  </div>
+                  <div class="kpi-value" id="kpi-threats">1</div>
+                  <div class="kpi-trend" id="kpi-threats-trend">
+                    <i class="fa-solid fa-shield"></i> <span>Faol mudofaa</span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- SVG Topology Visualization Block -->
+            <div class="notion-block card" draggable="true" id="block-topology" data-block-id="topology">
+              <div class="block-drag-handle">
+                <i class="fa-solid fa-grip-vertical"></i>
+                <span class="block-title">Tarmoq Topologiyasi (Real-Vaqtda)</span>
+                <span class="badge badge-normal" id="topology-status-badge">Faol monitoring</span>
+              </div>
+              <div class="topology-container">
+                <svg id="topology-svg"></svg>
+              </div>
+              
+              <!-- Attack Controls -->
+              <div class="controls-row" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; width: 100%;">
+                <button id="btn-simulate-ddos" class="control-btn warning-btn">
+                  <i class="fa-solid fa-circle-exclamation"></i> DDoS Hujumi
+                </button>
+                <button id="btn-simulate-bruteforce" class="control-btn danger-btn">
+                  <i class="fa-solid fa-key"></i> Brute Force (CCTV)
+                </button>
+                <button id="btn-simulate-sqli" class="control-btn danger-btn">
+                  <i class="fa-solid fa-database"></i> SQL Injection
+                </button>
+                <button id="btn-simulate-ransomware" class="control-btn danger-btn">
+                  <i class="fa-solid fa-skull-crossbones"></i> Ransomware Hujumi
+                </button>
+                <button id="btn-simulate-portscan" class="control-btn warning-btn">
+                  <i class="fa-solid fa-binoculars"></i> Port Skanerlash
+                </button>
+                <button id="btn-simulate-mitm" class="control-btn warning-btn">
+                  <i class="fa-solid fa-network-wired"></i> MITM Spoofing
+                </button>
+                <button id="btn-simulate-file" class="control-btn agent-btn">
+                  <i class="fa-solid fa-file-shield"></i> Endpoint Fayl Sim
+                </button>
+                <button id="btn-reset" class="control-btn success-btn">
+                  <i class="fa-solid fa-arrows-rotate"></i> Tizimni Tiklash
+                </button>
+              </div>
+            </div>
+
+            <!-- Chart Block -->
+            <div class="notion-block card" draggable="true" id="block-chart" data-block-id="chart">
+              <div class="block-drag-handle">
+                <i class="fa-solid fa-grip-vertical"></i>
+                <span class="block-title">AI Anomaliyalar monitoringi (Diagramma)</span>
+              </div>
+              <div class="graph-container">
+                <canvas id="liveChart"></canvas>
+              </div>
+            </div>
+
+            <!-- About / Tech Specs Block -->
+            <div class="notion-block card" draggable="true" id="block-about" data-block-id="about">
+              <div class="block-drag-handle">
+                <i class="fa-solid fa-grip-vertical"></i>
+                <span class="block-title">Silence AI qanday ishlaydi? (Texnologik yo'riq)</span>
+              </div>
+              <div class="about-container">
+                <div class="about-card problem">
+                  <h4><i class="fa-solid fa-circle-xmark"></i> Klassik Tizimlar Muammosi</h4>
+                  <p>Ko'pgina SOC tizimlari faqat reaktiv ishlaydi: hujum amalga oshib, zarar yetkazib bo'lingach signal beradi. Bu vaqt ichida korporativ serverlar va IoT qurilmalar (masalan, zaif CCTV kameralar) to'liq nazorat ostiga olinadi.</p>
+                </div>
+                <div class="about-card solution">
+                  <h4><i class="fa-solid fa-circle-check"></i> SilenceAI Proaktiv Yechimi</h4>
+                  <p>FastAPI/Node backend, SQLite ma'lumotlar ombori va AI anomaliyalar sezgirligi tizimi orqali, ulanish so'rovlari tahlil qilinadi. Risk darajasi 80% dan oshganda, AI inson omilisiz xavfli IP manzilni avtomatik bloklaydi (Response Layer).</p>
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- End block grid -->
+        </div>
+
+        <!-- ================= THREATS PAGE ================= -->
+        <div class="workspace-page" id="page-threats">
+          <div class="notion-block card">
+            <div class="section-title-wrapper">
+              <h2><i class="fa-solid fa-triangle-exclamation"></i> Faol va O'tmishdagi Tahdidlar</h2>
+              <p>AI Dvigatel tomonidan aniqlangan anomal faoliyatlar va tahdidlar tarixi</p>
+            </div>
+            
+            <div class="table-container">
+              <table class="premium-table" id="alerts-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Vaqt</th>
+                    <th>Tahdid Turi</th>
+                    <th>Manba IP</th>
+                    <th>Xavf darajasi</th>
+                    <th>Holat</th>
+                  </tr>
+                </thead>
+                <tbody id="alerts-table-body">
+                  <!-- Generated dynamically from server.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="notion-block card" style="margin-top: 25px;">
+            <div class="section-title-wrapper">
+              <h2><i class="fa-solid fa-user-slash"></i> Faol Bloklangan IP manzillar</h2>
+              <p>Ruter darajasida kirish taqiqlangan so'rovchilar ro'yxati (Firewall Block Rules)</p>
+            </div>
+            
+            <div class="blocked-ips-grid" id="blocked-ips-list">
+              <!-- Blocked IP Cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= LOGS PAGE ================= -->
+        <div class="workspace-page" id="page-logs">
+          <div class="notion-block card">
+            <div class="log-manager-header">
+              <div class="log-search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="log-search-input" placeholder="Tugun, IP yoki xabar orqali loglarni qidirish...">
+              </div>
+              <div class="log-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="system">System</button>
+                <button class="filter-btn" data-filter="ddos">DDoS</button>
+                <button class="filter-btn" data-filter="cctv">CCTV</button>
+                <button class="filter-btn" data-filter="file">File</button>
+                <button class="filter-btn" id="btn-clear-logs"><i class="fa-solid fa-trash-can"></i> Tozalash</button>
+              </div>
+            </div>
+
+            <div class="log-terminal" id="terminal-logs" style="max-height: 550px; min-height: 400px;">
+              <!-- Dynamic DB logs stream -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= DEVICES PAGE ================= -->
+        <div class="workspace-page" id="page-devices">
+          <div class="notion-block card">
+            <div class="section-title-wrapper">
+              <h2><i class="fa-solid fa-server"></i> Tarmoqdagi Qurilmalar & Endpoint Agentlar</h2>
+              <p>Silence AI agentlari o'rnatilgan tizimlar monitoringi</p>
+            </div>
+
+            <div class="devices-grid" id="devices-list-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <div class="notion-block card" style="margin-top: 25px;">
+            <div class="agent-command-box">
+              <div class="agent-command-info">
+                <h3><i class="fa-solid fa-terminal"></i> Endpoint Agentni Ishga Tushirish</h3>
+                <p>Ushbu loyihada haqiqiy operatsion tizim monitoring agenti taqdim etilgan. U CPU, RAM va real-vaqtdagi fayl o'zgarishlarini kuzatib boradi. Agentni faollashtirish uchun yangi terminal ochib, quyidagi buyruqni ishga tushiring:</p>
+                <code class="code-box">node agent.js</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SETTINGS PAGE ================= -->
+        <div class="workspace-page" id="page-settings">
+          <div class="notion-block card">
+            <div class="section-title-wrapper">
+              <h2><i class="fa-solid fa-sliders"></i> Tizim & AI Sozlamalari</h2>
+              <p>Silence AI Response va Detection Layer konfiguratsiyasi</p>
+            </div>
+
+            <div class="settings-panel">
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">AI Avtomatik Javob (Auto-Defense)</span>
+                  <span class="setting-description">Inson aralashuvisiz hujum qilayotgan IP-larni avtomatik bloklash va tizim tugunlarini izolyatsiya qilish.</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-auto-defense" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">AI Anomaliya Sezgirligi (Sensitivity)</span>
+                  <span class="setting-description">Anomaliyalarni baholash darajasi. Sezgirlik oshgani sari AI kichik shubhali harakatlarga ham tezroq reaksiya qiladi.</span>
+                </div>
+                <div class="range-slider-container">
+                  <input type="range" id="sensitivity-slider" min="10" max="90" value="65" class="range-slider">
+                  <span class="range-val" id="sensitivity-val">65%</span>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-label">Ma'lumotlar bazasini qayta tiklash</span>
+                  <span class="setting-description">Barcha jurnallar, alerts va bloklangan IP manzillar tarixini butunlay tozalash va default holatga qaytarish.</span>
+                </div>
+                <button id="btn-reset-db" class="panel-action-btn danger-btn-outline"><i class="fa-solid fa-triangle-exclamation"></i> Bazani Tozalash</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- End viewport -->
+    </main>
+
+    <!-- RIGHT PANEL: AI COPILOT CHAT -->
+    <aside class="right-chat-panel" id="ai-chat-sidebar">
+      <div class="chat-header">
+        <div class="chat-header-title">
+          <i class="fa-solid fa-brain"></i>
+          <div>
+            <h3>AI Copilot</h3>
+            <span>Silence Security Assistant</span>
+          </div>
+        </div>
+        <button class="chat-toggle-btn" id="btn-toggle-chat" title="Panelni yopish">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+      </div>
+      
+      <!-- Message Stream -->
+      <div class="chat-body" id="chat-messages-container">
+        <div class="chat-message bot">
+          Assalomu alaykum! Men Silence AI kiberxavfsizlik bo'yicha yordamchisiman. 🧠
+          Tizim faoliyati, bloklangan IP-lar yoki tahdidlar haqida mendan so'rashingiz mumkin.
+        </div>
+      </div>
+      
+      <!-- Suggestions tags -->
+      <div class="chat-suggestions">
+        <span class="suggestion-tag" onclick="sendSuggestion('Tizim holati qanday?')">Tizim holati</span>
+        <span class="suggestion-tag" onclick="sendSuggestion('Bloklangan IP manzillar bormi?')">Bloklangan IP-lar</span>
+        <span class="suggestion-tag" onclick="sendSuggestion('Oxirgi xavflarni ko\'rsat')">Oxirgi xavflar</span>
+        <span class="suggestion-tag" onclick="sendSuggestion('Tizim hisobotini tayyorla')">Batafsil Hisobot</span>
+      </div>
+
+      <!-- Chat input form -->
+      <div class="chat-footer">
+        <input type="text" id="chat-input" placeholder="Savolingizni yozing...">
+        <button id="btn-send-chat"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </aside>
+
+    <!-- FLOATING TOGGLE FOR CHAT PANEL (WHEN COLLAPSED) -->
+    <button class="chat-float-btn" id="btn-float-chat" style="display: none;" title="AI Copilot">
+      <i class="fa-solid fa-comment-medical"></i>
+    </button>
+  </div>
+
+  <!-- Interactive Overlays (Modals) -->
+  
+  <!-- Custom File Change Simulation Modal -->
+  <div id="modal-file-sim" class="overlay-panel">
+    <div class="overlay-content">
+      <button class="close-btn" onclick="closeModal('modal-file-sim')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="modal-title"><i class="fa-solid fa-file-circle-exclamation"></i> Fayl O'zgarishini Simulyatsiya Qilish</h3>
+      <div class="modal-body">
+        <p>Endpoint agenti joylashgan papkadagi fayl o'zgarishlarini real-vaqtda kuzatadi. Quyidagi forma orqali shubhali fayl harakatini dashboardga simulyatsiya qilishingiz mumkin:</p>
+        
+        <div class="form-group">
+          <label for="sim-filename">Fayl nomi:</label>
+          <input type="text" id="sim-filename" value="config_backup.json" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="sim-file-event">Faoliyat turi:</label>
+          <select id="sim-file-event" class="form-input">
+            <option value="change">Tahrirlandi (Modified)</option>
+            <option value="rename">Yaratildi / O'chirildi (Altered)</option>
+            <option value="ransomware">Shubhali Shifrlash (Possible Ransomware)</option>
+          </select>
+        </div>
+
+        <button id="btn-submit-file-sim" class="control-btn warning-btn" style="margin-top: 15px; width: 100%;">
+          Simulyatsiya Qilish <i class="fa-solid fa-share-from-square"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TELEGRAM CONFIG MODAL ===== -->
+  <div id="modal-telegram" class="overlay-panel">
+    <div class="overlay-content" style="max-width:500px;">
+      <button class="close-btn" onclick="closeModal('modal-telegram')"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="modal-title"><i class="fa-brands fa-telegram" style="color:#22d3ee;"></i> Telegram Bot Sozlamalari</h3>
+      <div class="modal-body">
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:16px;">
+          Har bir yangi xavf aniqlanganda Telegram'ga darhol xabar yuboriladi.
+        </p>
+        <div style="background:rgba(34,211,238,0.05);border:1px solid rgba(34,211,238,0.15);border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;color:#94a3b8;line-height:1.7;">
+          <strong style="color:#22d3ee;">📋 Bot yaratish:</strong><br>
+          1. Telegram da <strong>@BotFather</strong> ga yozing<br>
+          2. <code>/newbot</code> buyrug'ini yuboring<br>
+          3. Bot nomini kiriting → <strong>Token</strong> olasiz<br>
+          4. Botingizga <code>/start</code> yuboring<br>
+          5. <a href="#" onclick="window.open('https://api.telegram.org/bot'+document.getElementById('tg-token').value+'/getUpdates','_blank')" style="color:#22d3ee;">Chat ID ni shu yerdan oling</a>
+        </div>
+        <div class="form-group">
+          <label style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Bot Token</label>
+          <input type="text" id="tg-token" class="form-input" placeholder="1234567890:AAH..." style="margin-top:6px;" />
+        </div>
+        <div class="form-group">
+          <label style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Chat ID</label>
+          <input type="text" id="tg-chat-id" class="form-input" placeholder="-1001234567890" style="margin-top:6px;" />
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button onclick="saveTelegramConfig()" class="control-btn" style="flex:1;">💾 Saqlash va Ulash</button>
+          <button onclick="testTelegram()" class="control-btn warning-btn" style="flex:1;">📨 Test Xabar</button>
+        </div>
+        <div id="tg-result" style="margin-top:12px;font-size:13px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== USERS MODAL ===== -->
+  <div id="modal-users" class="overlay-panel">
+    <div class="overlay-content" style="max-width:560px;">
+      <button class="close-btn" onclick="closeModal('modal-users')"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="modal-title"><i class="fa-solid fa-users"></i> Foydalanuvchilar Boshqaruvi</h3>
+      <div class="modal-body">
+        <div id="users-list" style="margin-bottom:16px;"></div>
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px;">
+          <div style="font-size:12px;font-weight:600;color:#a5b4fc;margin-bottom:12px;">➕ Yangi Foydalanuvchi Qo'shish</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <input type="text" id="new-username" class="form-input" placeholder="Username" />
+            <input type="password" id="new-password" class="form-input" placeholder="Parol" />
+            <input type="text" id="new-fullname" class="form-input" placeholder="To'liq ism" />
+            <select id="new-role" class="form-input">
+              <option value="analyst">Analyst</option>
+              <option value="admin">Admin</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          <button onclick="createUser()" class="control-btn" style="width:100%;margin-top:10px;">➕ Qo'shish</button>
+          <div id="user-result" style="margin-top:10px;font-size:13px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== API KEYS MODAL ===== -->
+  <div id="modal-apikeys" class="overlay-panel">
+    <div class="overlay-content" style="max-width:560px;">
+      <button class="close-btn" onclick="closeModal('modal-apikeys')"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="modal-title"><i class="fa-solid fa-key"></i> API Kalitlar Boshqaruvi</h3>
+      <div class="modal-body">
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:16px;">Tashqi tizimlar bu kalitlar orqali <code>/api/external/alert</code> ga so'rov yuborishi mumkin.</p>
+        <div id="apikeys-list" style="margin-bottom:16px;"></div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="new-key-name" class="form-input" placeholder="Kalit nomi (masalan: Zabbix, SIEM)" style="flex:1;" />
+          <button onclick="createApiKey()" class="control-btn" style="white-space:nowrap;">🔑 Yangi Kalit</button>
+        </div>
+        <div id="apikey-result" style="margin-top:12px;font-size:13px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Scripts -->
+  <script src="app.js"></script>
+  <script>
+    // =============================================
+    // AUTH GUARD
+    // =============================================
+    const _token = localStorage.getItem('silence_token');
+    const _user = JSON.parse(localStorage.getItem('silence_user') || 'null');
+
+    if (!_token) {
+      window.location.href = '/login.html';
+    } else {
+      // Foydalanuvchi ma'lumotlarini ko'rsat
+      if (_user) {
+        document.getElementById('user-display-name').textContent = _user.full_name || _user.username;
+        document.getElementById('user-display-role').textContent = _user.role;
+      }
+      // Token tekshirish
+      fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + _token } })
+        .then(r => { if (!r.ok) { localStorage.clear(); window.location.href = '/login.html'; } })
+        .catch(() => {});
+    }
+
+    // Logout funksiyasi
+    function doLogout() {
+      fetch('/api/auth/logout', { method:'POST', headers:{ 'Authorization': 'Bearer ' + _token } });
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+
+    // Auth header helper
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('silence_token') };
+    }
+
+    // =============================================
+    // TELEGRAM
+    // =============================================
+    function openTelegramModal() {
+      document.getElementById('modal-telegram').classList.add('active');
+      // Oldingi config yuklash
+      fetch('/api/telegram/status', { headers: authHeaders() })
+        .then(r => r.json())
+        .then(d => {
+          const badge = document.getElementById('tg-status-badge');
+          if (d.isConfigured) {
+            badge.textContent = 'ON'; badge.style.background = 'rgba(34,197,94,0.3)'; badge.style.color = '#86efac';
+            document.getElementById('tg-result').innerHTML = '<span style="color:#86efac;">✅ Telegram bot ulangan va ishlayapti!</span>';
+          }
+        });
+    }
+
+    async function saveTelegramConfig() {
+      const bot_token = document.getElementById('tg-token').value.trim();
+      const chat_id = document.getElementById('tg-chat-id').value.trim();
+      if (!bot_token || !chat_id) { document.getElementById('tg-result').innerHTML = '<span style="color:#fca5a5;">❌ Token va Chat ID kiritish shart.</span>'; return; }
+      const r = await fetch('/api/telegram/config', { method:'POST', headers: authHeaders(), body: JSON.stringify({ bot_token, chat_id }) });
+      const d = await r.json();
+      const result = document.getElementById('tg-result');
+      if (r.ok) {
+        result.innerHTML = '<span style="color:#86efac;">✅ Bot muvaffaqiyatli ulandi!</span>';
+        document.getElementById('tg-status-badge').textContent = 'ON';
+        document.getElementById('tg-status-badge').style.background = 'rgba(34,197,94,0.3)';
+        document.getElementById('tg-status-badge').style.color = '#86efac';
+      } else {
+        result.innerHTML = '<span style="color:#fca5a5;">❌ ' + d.error + '</span>';
+      }
+    }
+
+    async function testTelegram() {
+      const r = await fetch('/api/telegram/test', { method:'POST', headers: authHeaders() });
+      const d = await r.json();
+      document.getElementById('tg-result').innerHTML = r.ok
+        ? '<span style="color:#86efac;">📨 Test xabari yuborildi!</span>'
+        : '<span style="color:#fca5a5;">❌ ' + d.error + '</span>';
+    }
+
+    // =============================================
+    // FOYDALANUVCHILAR
+    // =============================================
+    function openUsersModal() {
+      document.getElementById('modal-users').classList.add('active');
+      loadUsers();
+    }
+
+    async function loadUsers() {
+      const r = await fetch('/api/users', { headers: authHeaders() });
+      if (!r.ok) { document.getElementById('users-list').innerHTML = '<p style="color:#f87171;">Faqat admin ko\'rishi mumkin.</p>'; return; }
+      const users = await r.json();
+      document.getElementById('users-list').innerHTML = users.map(u => `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 14px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">${u.role === 'admin' ? '👑' : u.role === 'analyst' ? '🔍' : '👁️'}</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;">${u.full_name || u.username}</div>
+              <div style="font-size:11px;color:#64748b;">@${u.username} • ${u.role.toUpperCase()}</div>
+            </div>
+          </div>
+          <button onclick="deleteUser(${u.id})" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    async function createUser() {
+      const username = document.getElementById('new-username').value.trim();
+      const password = document.getElementById('new-password').value;
+      const full_name = document.getElementById('new-fullname').value.trim();
+      const role = document.getElementById('new-role').value;
+      if (!username || !password) { document.getElementById('user-result').innerHTML = '<span style="color:#fca5a5;">Username va parol kiritish shart.</span>'; return; }
+      const r = await fetch('/api/users', { method:'POST', headers: authHeaders(), body: JSON.stringify({ username, password, role, full_name }) });
+      const d = await r.json();
+      document.getElementById('user-result').innerHTML = r.ok ? '<span style="color:#86efac;">✅ Foydalanuvchi qo\'shildi!</span>' : '<span style="color:#fca5a5;">❌ ' + d.error + '</span>';
+      if (r.ok) loadUsers();
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Ushbu foydalanuvchini o\'chirishni tasdiqlaysizmi?')) return;
+      await fetch('/api/users/' + id, { method:'DELETE', headers: authHeaders() });
+      loadUsers();
+    }
+
+    // =============================================
+    // API KALITLAR
+    // =============================================
+    function openApiKeysModal() {
+      document.getElementById('modal-apikeys').classList.add('active');
+      loadApiKeys();
+    }
+
+    async function loadApiKeys() {
+      const r = await fetch('/api/api-keys', { headers: authHeaders() });
+      if (!r.ok) { document.getElementById('apikeys-list').innerHTML = '<p style="color:#f87171;">Faqat admin ko\'rishi mumkin.</p>'; return; }
+      const keys = await r.json();
+      document.getElementById('apikeys-list').innerHTML = keys.length === 0 ? '<p style="color:#64748b;font-size:13px;">Hali API kalit yaratilmagan.</p>' : keys.map(k => `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 14px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:600;">${k.name}</div>
+              <code style="font-size:11px;color:#818cf8;background:rgba(99,102,241,0.1);padding:2px 8px;border-radius:4px;">${k.key_value}</code>
+            </div>
+            <button onclick="deleteApiKey(${k.id})" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">🗑️</button>
+          </div>
+          <div style="font-size:10px;color:#475569;margin-top:4px;">Yaratildi: ${new Date(k.created_at).toLocaleString()} ${k.last_used ? ' | Oxirgi: ' + new Date(k.last_used).toLocaleString() : ''}</div>
+        </div>
+      `).join('');
+    }
+
+    async function createApiKey() {
+      const name = document.getElementById('new-key-name').value.trim() || 'API Kalit';
+      const r = await fetch('/api/api-keys', { method:'POST', headers: authHeaders(), body: JSON.stringify({ name }) });
+      const d = await r.json();
+      if (r.ok) {
+        document.getElementById('apikey-result').innerHTML = `<div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:10px;"><div style="font-size:11px;color:#a5b4fc;margin-bottom:4px;">✅ Yangi kalit yaratildi:</div><code style="font-size:12px;color:#c7d2fe;word-break:break-all;">${d.key_value}</code></div>`;
+        loadApiKeys();
+      } else {
+        document.getElementById('apikey-result').innerHTML = '<span style="color:#fca5a5;">❌ ' + d.error + '</span>';
+      }
+    }
+
+    async function deleteApiKey(id) {
+      if (!confirm('API kalitni o\'chirishni tasdiqlaysizmi?')) return;
+      await fetch('/api/api-keys/' + id, { method:'DELETE', headers: authHeaders() });
+      loadApiKeys();
+    }
+
+    // Modal yopish
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Modal tashqarisini bosish
+    ['modal-telegram', 'modal-users', 'modal-apikeys'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', (e) => {
+        if (e.target.id === id) closeModal(id);
+      });
+    });
+  </script>
+</body>
+</html>

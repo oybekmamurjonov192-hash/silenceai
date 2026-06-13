@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Silence AI — Kirish</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --accent: #22d3ee;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --bg: #0a0a14;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.15; animation: orbFloat 8s ease-in-out infinite;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #6366f1; top: -100px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 400px; height: 400px; background: #22d3ee; bottom: -100px; right: -50px; animation-delay: 3s; }
+    .orb-3 { width: 300px; height: 300px; background: #a855f7; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: 6s; }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* Grid lines */
+    .grid-overlay {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    /* Floating particles */
+    .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .particle {
+      position: absolute; width: 2px; height: 2px;
+      background: var(--primary); border-radius: 50%;
+      animation: particleFloat linear infinite;
+      opacity: 0;
+    }
+    @keyframes particleFloat {
+      0% { opacity: 0; transform: translateY(100vh) scale(0); }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-100px) scale(1); }
+    }
+
+    /* Login container */
+    .login-container {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 440px;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 48px 40px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+      animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(40px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .logo-area {
+      text-align: center; margin-bottom: 36px;
+    }
+
+    .logo-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 16px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 28px; margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(99,102,241,0.4);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 8px 32px rgba(99,102,241,0.4); }
+      50% { box-shadow: 0 8px 48px rgba(99,102,241,0.7), 0 0 0 8px rgba(99,102,241,0.1); }
+    }
+
+    .logo-title {
+      font-size: 24px; font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-subtitle {
+      font-size: 13px; color: var(--text-muted); margin-top: 6px;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    .security-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2);
+      color: var(--success); font-size: 11px; font-weight: 500;
+      padding: 4px 12px; border-radius: 20px; margin-top: 12px;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 20px; }
+
+    .form-label {
+      display: block; font-size: 12px; font-weight: 500;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; color: var(--text-muted);
+      transition: color 0.3s;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 14px 14px 14px 44px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      background: rgba(99,102,241,0.08);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+
+    .form-input:focus + .focus-ring { opacity: 1; }
+
+    .form-input::placeholder { color: var(--text-muted); }
+
+    .input-wrapper:focus-within .input-icon {
+      color: var(--primary);
+    }
+
+    .password-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 16px; padding: 4px;
+      transition: color 0.3s;
+    }
+
+    .password-toggle:hover { color: var(--text); }
+
+    /* Login button */
+    .btn-login {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none; border-radius: 12px;
+      color: white; font-size: 15px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer; margin-top: 8px;
+      transition: all 0.3s;
+      position: relative; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99,102,241,0.6);
+    }
+
+    .btn-login:active { transform: translateY(0); }
+
+    .btn-login.loading { pointer-events: none; }
+
+    .btn-login .btn-text { transition: opacity 0.3s; }
+    .btn-login .btn-spinner {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s;
+    }
+
+    .btn-login.loading .btn-text { opacity: 0; }
+    .btn-login.loading .btn-spinner { opacity: 1; }
+
+    .spinner {
+      width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Ripple effect */
+    .btn-login::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .btn-login:hover::after { opacity: 1; }
+
+    /* Error/Success messages */
+    .alert-box {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+      animation: alertIn 0.3s ease;
+    }
+
+    @keyframes alertIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-error {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+
+    .alert-success {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: #86efac;
+    }
+
+    /* Footer */
+    .login-footer {
+      text-align: center; margin-top: 24px;
+    }
+
+    .login-footer p { font-size: 12px; color: var(--text-muted); }
+
+    .status-indicator {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 8px;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--success);
+      animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+    }
+
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 24px 0;
+    }
+
+    .divider-line { flex: 1; height: 1px; background: var(--glass-border); }
+    .divider-text { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    .demo-creds {
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .demo-creds strong { color: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="grid-overlay"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- Login Card -->
+  <div class="login-container">
+    <div class="login-card">
+
+      <!-- Logo -->
+      <div class="logo-area">
+        <div class="logo-icon">🛡️</div>
+        <div class="logo-title">Silence AI</div>
+        <div class="logo-subtitle">Kiberxavfsizlik Platformasi</div>
+        <div class="security-badge">
+          <span>🔒</span>
+          <span>Enterprise Himoyalangan</span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="username">Foydalanuvchi nomi</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input
+              type="text" id="username" class="form-input"
+              placeholder="username kiriting" required autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Parol</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input
+              type="password" id="password" class="form-input"
+              placeholder="••••••••" required autocomplete="off"
+            />
+            <button type="button" class="password-toggle" id="togglePwd" title="Parolni ko'rsat">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-text">🚀 Tizimga Kirish</span>
+          <span class="btn-spinner"><div class="spinner"></div></span>
+        </button>
+
+        <div class="alert-box alert-error" id="errorMsg"></div>
+        <div class="alert-box alert-success" id="successMsg"></div>
+      </form>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">Demo kirish ma'lumotlari</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="demo-creds">
+        👤 Username: <strong>admin</strong> &nbsp;|&nbsp; 🔑 Parol: <strong>silence123</strong>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      <p>Silence AI Enterprise v2.0</p>
+      <div class="status-indicator">
+        <div class="status-dot" id="serverDot"></div>
+        <span style="font-size:11px; color: #64748b;" id="serverStatus">Server tekshirilmoqda...</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================
+    // PARTICLES
+    // =============================================
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        animation-duration: ${6 + Math.random() * 10}s;
+        animation-delay: ${Math.random() * 10}s;
+        width: ${1 + Math.random() * 2}px;
+        height: ${1 + Math.random() * 2}px;
+        background: ${Math.random() > 0.5 ? '#6366f1' : '#22d3ee'};
+      `;
+      particlesContainer.appendChild(p);
+    }
+
+    // =============================================
+    // PASSWORD TOGGLE
+    // =============================================
+    document.getElementById('togglePwd').addEventListener('click', () => {
+      const pwd = document.getElementById('password');
+      const btn = document.getElementById('togglePwd');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        pwd.type = 'password';
+        btn.textContent = '👁️';
+      }
+    });
+
+    // =============================================
+    // SERVER HOLATI
+    // =============================================
+    async function checkServer() {
+      try {
+        const r = await fetch('/api/config', { method: 'GET' });
+        const dot = document.getElementById('serverDot');
+        const status = document.getElementById('serverStatus');
+        // 401 = server ishlayapti, faqat auth kerak
+        if (r.status === 401 || r.ok) {
+          dot.style.background = '#22c55e';
+          status.textContent = 'Server faol — Ulanish xavfsiz';
+          status.style.color = '#22c55e';
+        }
+      } catch (e) {
+        document.getElementById('serverDot').style.background = '#ef4444';
+        document.getElementById('serverStatus').textContent = 'Server ulanmagan';
+        document.getElementById('serverStatus').style.color = '#ef4444';
+      }
+    }
+    checkServer();
+
+    // =============================================
+    // LOGIN
+    // =============================================
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
+
+    function showError(msg) {
+      errorMsg.textContent = '❌ ' + msg;
+      errorMsg.style.display = 'block';
+      successMsg.style.display = 'none';
+      // Shake animation
+      loginBtn.style.animation = 'none';
+      loginBtn.style.transform = 'translateX(-4px)';
+      setTimeout(() => loginBtn.style.transform = 'translateX(4px)', 100);
+      setTimeout(() => loginBtn.style.transform = 'translateX(0)', 200);
+    }
+
+    function showSuccess(msg) {
+      successMsg.textContent = '✅ ' + msg;
+      successMsg.style.display = 'block';
+      errorMsg.style.display = 'none';
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('Barcha maydonlarni to\'ldiring.');
+        return;
+      }
+
+      loginBtn.classList.add('loading');
+      errorMsg.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showError(data.error || 'Kirish xatosi yuz berdi.');
+          loginBtn.classList.remove('loading');
+          return;
+        }
+
+        // Token saqlash
+        localStorage.setItem('silence_token', data.token);
+        localStorage.setItem('silence_user', JSON.stringify(data.user));
+
+        showSuccess(`Xush kelibsiz, ${data.user.full_name || data.user.username}!`);
+
+        // Dashboard ga o'tish
+        setTimeout(() => {
+          window.location.href = '/index.html';
+        }, 1000);
+
+      } catch (err) {
+        showError('Server bilan ulanishda xatolik. Server ishlaётganiga ishonch hosil qiling.');
+        loginBtn.classList.remove('loading');
+      }
+    });
+
+    // Enter tugmasi
+    document.getElementById('password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') loginForm.dispatchEvent(new Event('submit'));
+    });
+
+    // =============================================
+    // AGAR ALLAQACHON LOGIN QILGAN BO'LSA
+    // =============================================
+    const existingToken = localStorage.getItem('silence_token');
+    if (existingToken) {
+      fetch('/api/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + existingToken }
+      }).then(r => {
+        if (r.ok) window.location.href = '/index.html';
+      }).catch(() => {});
+    }
+  </script>
+</body>
+</html>
